@@ -1,7 +1,8 @@
 package zio.jwt
 
 import pdi.jwt.{Jwt, JwtAlgorithm}
-import zio.{IO, ZIO}
+import zio.jwt.ClaimValidator.{InvalidAudience, InvalidIssuer}
+import zio.{IO, NonEmptyChunk, ZIO}
 import zio.test.{assertTrue, assertZIO, ZIOSpecDefault}
 
 import java.security.interfaces.RSAPublicKey
@@ -14,7 +15,7 @@ object JwtValidatorSpec extends ZIOSpecDefault {
       val jwks              =
         Jwks(keys = Vector(RsaJwk(pubKey.getPublicExponent, pubKey.getModulus, None, None)))
       val fetcher           = new MockFetcher(jwks)
-      val validator         = JwtValidatorLive(fetcher)
+      val validator         = JwtValidatorLive(fetcher, Nil, Nil)
       val token             = Jwt.encode("""{"user":1}""", privKey, JwtAlgorithm.RS256)
 
       for {
@@ -26,10 +27,26 @@ object JwtValidatorSpec extends ZIOSpecDefault {
       val jwks        =
         Jwks(keys = Vector(RsaJwk(pubKey.getPublicExponent, pubKey.getModulus, None, None)))
       val fetcher     = new MockFetcher(jwks)
-      val validator   = JwtValidatorLive(fetcher)
+      val validator   = JwtValidatorLive(fetcher, Nil, Nil)
       for {
         r <- validator.validate("GARBAGE").either
       } yield assertTrue(r == Left(JwtParsingError("Invalid token format")))
+    },
+    test("compose claim validation errors") {
+      val (privKey, pubKey) = genKeyPair()
+      val jwks              =
+        Jwks(keys = Vector(RsaJwk(pubKey.getPublicExponent, pubKey.getModulus, None, None)))
+      val fetcher           = new MockFetcher(jwks)
+      val claimValidators   = List(ClaimValidator.IssuerEq("foo"), ClaimValidator.AudienceEq("bar"))
+      val validator         = JwtValidatorLive(fetcher, Nil, claimValidators)
+      val token             =
+        Jwt.encode("""{"issuer":"invalid", "audience":"invalid"}""", privKey, JwtAlgorithm.RS256)
+
+      for {
+        r <- validator.validate(token).either
+      } yield assertTrue(
+        r == Left(ClaimValidationErrors(NonEmptyChunk(InvalidIssuer, InvalidAudience))),
+      )
     },
   )
 

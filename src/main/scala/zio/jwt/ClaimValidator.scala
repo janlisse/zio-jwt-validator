@@ -31,11 +31,4 @@ object ClaimValidator {
       else
         Validation.fail(ClaimValidationErrors(InvalidIssuer))
   }
-
-  given associative: Associative[ClaimValidator] =
-    new Associative[ClaimValidator] {
-      def combine(left: => ClaimValidator, right: => ClaimValidator): ClaimValidator =
-        (jwtClaim: JwtClaim) =>
-          Validation.validate(left.validate(jwtClaim), right.validate(jwtClaim)).as(())
-    }
 }
