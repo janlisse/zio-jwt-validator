@@ -18,7 +18,7 @@ object JwksFetcher {
   def fetch() = ZIO.serviceWithZIO[JwksFetcher](_.fetch())
 }
 
-final class JwksFetcherHttps(
+final class JwksFetcherLive(
     url: URL,
     trustStoreFile: String,
     trustStorePasswd: String)
@@ -63,7 +63,7 @@ final class JwksFetcherHttps(
     ZIO.fromEither(Jwks.parse(str))
 }
 
-object JwksFetcherHttps {
+object JwksFetcherLive {
   def layer(
       jwksUrl: String,
       trustStorePath: String,
@@ -72,6 +72,6 @@ object JwksFetcherHttps {
     ZLayer.fromZIO(
       ZIO
         .fromEither(URL.fromString(jwksUrl))
-        .map(url => new JwksFetcherHttps(url, trustStorePath, trustStorePassword)),
+        .map(url => new JwksFetcherLive(url, trustStorePath, trustStorePassword)),
     )
 }
