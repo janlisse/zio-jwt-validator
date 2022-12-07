@@ -8,13 +8,6 @@ trait JwkMatcher {
 }
 
 object JwkMatcher {
-  given associative: Associative[JwkMatcher] =
-    new Associative[JwkMatcher] {
-      def combine(left: => JwkMatcher, right: => JwkMatcher): JwkMatcher =
-        (jwtHeader: JwtHeader, jwk: Jwk) =>
-          left.matches(jwtHeader, jwk) || right.matches(jwtHeader, jwk)
-    }
-
   val Kid       = new JwkMatcher:
     override def matches(jwtHeader: JwtHeader, jwk: Jwk): Boolean =
       (for {

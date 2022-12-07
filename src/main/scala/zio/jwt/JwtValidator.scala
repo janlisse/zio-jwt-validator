@@ -23,14 +23,14 @@ object JwtValidator {
 
 final case class JwtValidatorLive(
     fetcher: JwksFetcher,
-    matcher: Option[JwkMatcher] = None,
-    claimValidator: Option[ClaimValidator] = None)
+    matchers: List[JwkMatcher],
+    claimValidators: List[ClaimValidator])
     extends JwtValidator {
   def validate(token: String): IO[JwtValidationError, Unit] =
     (for {
       header <- parseHeader(token)
       jwks   <- fetcher.fetch()
-      jwk    <- filterJwk(jwks, header, matcher)
+      jwk    <- filterJwk(jwks, header, matchers)
       claim  <- parseClaim(jwk, token)
       _      <- validateClaim(claim)
     } yield ()).tapErrorCause(cause => ZIO.logErrorCause(cause))
@@ -45,11 +45,14 @@ final case class JwtValidatorLive(
   private def filterJwk(
       jwks: Jwks,
       header: JwtHeader,
-      matcher: Option[JwkMatcher],
+      matchers: List[JwkMatcher],
     ) =
     ZIO
       .fromOption(
-        matcher.flatMap(m => jwks.keys.find(m.matches(header, _))).orElse(jwks.keys.headOption),
+        jwks
+          .keys
+          .find(jwk => matchers.exists(m => m.matches(header, jwk)))
+          .orElse(jwks.keys.headOption),
       )
       .mapError(_ => NoMatchingJwkFound)
 
@@ -73,15 +76,22 @@ final case class JwtValidatorLive(
       } yield header
 
   private def validateClaim(claim: JwtClaim): IO[ClaimValidationErrors, Unit] =
-    claimValidator
-      .map(v => ZIO.fromEither(v.validate(claim).toEitherAssociative))
-      .getOrElse(ZIO.succeed(()))
+    ZIO
+      .fromEither(
+        Validation
+          .validateAll(
+            claimValidators
+              .map(v => v.validate(claim)),
+          )
+          .toEitherAssociative,
+      )
+      .as(())
 }
 
 object JwtValidatorLive {
   def layer(
-      matcher: Option[JwkMatcher] = None,
-      claimValidator: Option[ClaimValidator] = None,
+      matcher: List[JwkMatcher] = Nil,
+      claimValidator: List[ClaimValidator] = Nil,
     ) =
     ZLayer(
       for {
