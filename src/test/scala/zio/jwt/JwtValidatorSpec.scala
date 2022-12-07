@@ -14,7 +14,7 @@ object JwtValidatorSpec extends ZIOSpecDefault {
       val jwks              =
         Jwks(keys = Vector(RsaJwk(pubKey.getPublicExponent, pubKey.getModulus, None, None)))
       val fetcher           = new MockFetcher(jwks)
-      val validator         = JwtValidatorLive("http//issuer.com", fetcher)
+      val validator         = JwtValidatorLive(fetcher)
       val token             = Jwt.encode("""{"user":1}""", privKey, JwtAlgorithm.RS256)
 
       for {
@@ -26,7 +26,7 @@ object JwtValidatorSpec extends ZIOSpecDefault {
       val jwks        =
         Jwks(keys = Vector(RsaJwk(pubKey.getPublicExponent, pubKey.getModulus, None, None)))
       val fetcher     = new MockFetcher(jwks)
-      val validator   = JwtValidatorLive("http//issuer.com", fetcher)
+      val validator   = JwtValidatorLive(fetcher)
       for {
         r <- validator.validate("GARBAGE").either
       } yield assertTrue(r == Left(JwtParsingError("Invalid token format")))
@@ -42,6 +42,6 @@ object JwtValidatorSpec extends ZIOSpecDefault {
 }
 
 class MockFetcher(jwks: Jwks) extends JwksFetcher {
-  def fetch(url: String): IO[JwtValidationError, Jwks] =
+  def fetch(): IO[JwtValidationError, Jwks] =
     ZIO.succeed(jwks)
 }

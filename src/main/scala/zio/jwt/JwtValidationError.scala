@@ -11,6 +11,7 @@ case class JwtParsingError(msg: String)  extends JwtValidationError
 case object NoMatchingJwkFound           extends JwtValidationError
 case object TokenExpired                 extends JwtValidationError
 case object TokenNotYetValid             extends JwtValidationError
+case object InsecureConnection           extends JwtValidationError
 
 trait ClaimValidationError
 case class ClaimValidationErrors(errors: NonEmptyChunk[ClaimValidationError])

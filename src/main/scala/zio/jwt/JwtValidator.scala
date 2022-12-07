@@ -3,6 +3,7 @@ package zio.jwt
 import pdi.jwt.JwtAlgorithm.RS256
 import pdi.jwt.{JwtClaim, JwtHeader, JwtZIOJson}
 import pdi.jwt.exceptions.{JwtExpirationException, JwtNotBeforeException}
+import zhttp.http.URL
 import zhttp.service.{ChannelFactory, Client, EventLoopGroup}
 import zio.json.*
 import zio.prelude.{Associative, Validation, ZValidation}
@@ -21,7 +22,6 @@ object JwtValidator {
 }
 
 final case class JwtValidatorLive(
-    issuerUrl: String,
     fetcher: JwksFetcher,
     matcher: Option[JwkMatcher] = None,
     claimValidator: Option[ClaimValidator] = None)
@@ -29,7 +29,7 @@ final case class JwtValidatorLive(
   def validate(token: String): IO[JwtValidationError, Unit] =
     (for {
       header <- parseHeader(token)
-      jwks   <- fetcher.fetch(issuerUrl)
+      jwks   <- fetcher.fetch()
       jwk    <- filterJwk(jwks, header, matcher)
       claim  <- parseClaim(jwk, token)
       _      <- validateClaim(claim)
@@ -80,8 +80,12 @@ final case class JwtValidatorLive(
 
 object JwtValidatorLive {
   def layer(
-      issuerUrl: String,
       matcher: Option[JwkMatcher] = None,
       claimValidator: Option[ClaimValidator] = None,
-    ) = ZLayer.succeed(JwtValidatorLive(issuerUrl, new JwksFetcherHttp(), matcher, claimValidator))
+    ) =
+    ZLayer(
+      for {
+        fetcher <- ZIO.service[JwksFetcher]
+      } yield JwtValidatorLive(fetcher, matcher, claimValidator),
+    )
 }
