@@ -13,8 +13,8 @@ trait ClaimValidator {
 }
 
 object ClaimValidator {
-  case object InvalidAudience    extends ClaimValidationError
-  case object InvalidIssuer       extends ClaimValidationError
+  case object InvalidAudience extends ClaimValidationError
+  case object InvalidIssuer   extends ClaimValidationError
 
   final case class AudienceEq(value: String) extends ClaimValidator {
     def validate(claim: JwtClaim) =
@@ -35,6 +35,7 @@ object ClaimValidator {
   given associative: Associative[ClaimValidator] =
     new Associative[ClaimValidator] {
       def combine(left: => ClaimValidator, right: => ClaimValidator): ClaimValidator =
-        (jwtClaim: JwtClaim) => Validation.validate(left.validate(jwtClaim), right.validate(jwtClaim)).as(())
+        (jwtClaim: JwtClaim) =>
+          Validation.validate(left.validate(jwtClaim), right.validate(jwtClaim)).as(())
     }
 }

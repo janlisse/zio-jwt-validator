@@ -1,0 +1,25 @@
+name: Continuous integration
+on: [ push, pull_request ]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@v13
+        with:
+          java-version: amazon-corretto@1.17
+      - name: Cache dependencies
+        uses: coursier/cache-action@v6
+      - name: Run checks
+        run: sbt scalafmtCheckAll dependencyCheck
+      - name: Run unit tests
+        run: sbt test
+      - name: Report unit tests
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          check_name: Unit test report
+          files: target/test-reports/*.xml
+          comment_mode: off

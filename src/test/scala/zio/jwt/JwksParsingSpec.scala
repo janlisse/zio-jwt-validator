@@ -12,13 +12,13 @@ import zio.test.Assertion._
 import scala.io.Source
 
 object JwksParsingSpec extends ZIOSpecDefault {
+  def spec = suite("JwksParsingSpec")(test("parse RS256 keys successfully") {
+    val source = Source.fromInputStream(getClass.getResourceAsStream("/jwks.json"))
+    val json   =
+      try source.mkString
+      finally source.close()
 
-  def spec = suite("JwksParsingSpec")(
-    test("parse RS256 keys successfully") {
-      val source = Source.fromInputStream(getClass.getResourceAsStream("/jwks.json"))
-      val json = try source.mkString finally source.close()
-
-      val jwks = Jwks.parse(json)
-      assertTrue(jwks.isRight)
-    })
+    val jwks = Jwks.parse(json)
+    assertTrue(jwks.isRight)
+  })
 }

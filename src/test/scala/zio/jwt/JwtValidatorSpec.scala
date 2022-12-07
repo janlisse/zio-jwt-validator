@@ -23,10 +23,10 @@ object JwtValidatorSpec extends ZIOSpecDefault {
     },
     test("return JwtParsingError for token with invalid header") {
       val (_, pubKey) = genKeyPair()
-      val jwks =
+      val jwks        =
         Jwks(keys = Vector(RsaJwk(pubKey.getPublicExponent, pubKey.getModulus, None, None)))
-      val fetcher = new MockFetcher(jwks)
-      val validator = JwtValidatorLive("http//issuer.com", fetcher)
+      val fetcher     = new MockFetcher(jwks)
+      val validator   = JwtValidatorLive("http//issuer.com", fetcher)
       for {
         r <- validator.validate("GARBAGE").either
       } yield assertTrue(r == Left(JwtParsingError("Invalid token format")))

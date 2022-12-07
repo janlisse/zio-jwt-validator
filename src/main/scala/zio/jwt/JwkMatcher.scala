@@ -15,7 +15,7 @@ object JwkMatcher {
           left.matches(jwtHeader, jwk) || right.matches(jwtHeader, jwk)
     }
 
-  val Kid = new JwkMatcher:
+  val Kid       = new JwkMatcher:
     override def matches(jwtHeader: JwtHeader, jwk: Jwk): Boolean =
       (for {
         kid1 <- jwk.keyId
