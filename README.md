@@ -33,16 +33,17 @@ All sorts of possible validation errors will be returned through the error type 
 There is a hierarchy of error types derived from `JwtValidationError`.
 
 In order to run this program you need to provide a [ZLayer](https://zio.dev/reference/contextual/zlayer/) for a `JwtValidator`
-and a `JwksFetcher`:
+and a `JwksFetcher`. Note: It is recommended to use the cached version of JwksFetcher which caches the retrieved JWKS, via: `JwksFetcherLive.cached(...)`.
+It allows to configure a custom `cacheTTL`, the default is 10 minutes.
+If you don't want any chaching at all you can still use: `JwksFetcherLive.uncached(...)`
 
 ```scala
   val run = program.provide(
-    JwksFetcherLive.layer(
-      "https://your.auth.provider/.well-known/jwks.json",
+    JwksFetcherLive.cached(
       "/Users/jan/.sdkman/candidates/java/current/lib/security/cacerts",
       "changeit"
     ),
-    JwtValidatorLive.layer()
+    JwtValidatorLive.layer("https://your.auth.provider/.well-known/jwks.json",)
   )
 ```
 

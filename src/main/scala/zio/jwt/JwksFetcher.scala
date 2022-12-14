@@ -5,30 +5,32 @@ import zhttp.http.URL
 import zhttp.service.client.ClientSSLHandler.ClientSSLOptions
 import zhttp.service.{ChannelFactory, Client, EventLoopGroup}
 import zio.{IO, ZIO, ZLayer}
+import zio.cache.{Cache, Lookup}
 
 import java.io.{FileInputStream, InputStream}
 import java.security.KeyStore
+import java.time.Duration
 import javax.net.ssl.TrustManagerFactory
 
 trait JwksFetcher {
-  def fetch(): IO[JwtValidationError, Jwks]
+  def fetch(jwksUrl: URL): IO[JwtValidationError, Jwks]
 }
 
 object JwksFetcher {
-  def fetch() = ZIO.serviceWithZIO[JwksFetcher](_.fetch())
+  def fetch(jwksUrl: URL) = ZIO.serviceWithZIO[JwksFetcher](_.fetch(jwksUrl))
 }
 
 final class JwksFetcherLive(
-    url: URL,
     trustStoreFile: String,
     trustStorePasswd: String)
     extends JwksFetcher {
-  def fetch(): IO[JwtValidationError, Jwks] = {
-    val env     = ChannelFactory.auto ++ EventLoopGroup.auto()
+  def fetch(jwksUrl: URL): IO[JwtValidationError, Jwks] = {
+    val env = ChannelFactory.auto ++ EventLoopGroup.auto()
+
     val program = for {
-      _    <- checkSSL(url)
+      _    <- checkSSL(jwksUrl)
       res  <- Client
-        .request(url.encode, ssl = sslOptionsWithTrustManager(trustStoreFile, trustStorePasswd))
+        .request(jwksUrl.encode, ssl = sslOptionsWithTrustManager(trustStoreFile, trustStorePasswd))
         .mapError(e => JwksLoadError(e.getMessage))
       data <- res.body.asString.mapError(e => JwksParsingError(e.getMessage))
       jwks <- parseJwks(data)
@@ -63,15 +65,23 @@ final class JwksFetcherLive(
     ZIO.fromEither(Jwks.parse(str))
 }
 
+final class CachingJwksFetcher(cache: Cache[URL, JwtValidationError, Jwks]) extends JwksFetcher {
+  def fetch(jwksUrl: URL): IO[JwtValidationError, Jwks] = cache.get(jwksUrl)
+}
+
 object JwksFetcherLive {
-  def layer(
-      jwksUrl: String,
+  def uncached(
       trustStorePath: String,
       trustStorePassword: String,
+    ) = ZLayer.succeed(new JwksFetcherLive(trustStorePath, trustStorePassword))
+
+  def cached(
+      trustStorePath: String,
+      trustStorePassword: String,
+      cacheTTL: Duration = Duration.ofMinutes(10),
     ) =
-    ZLayer.fromZIO(
-      ZIO
-        .fromEither(URL.fromString(jwksUrl))
-        .map(url => new JwksFetcherLive(url, trustStorePath, trustStorePassword)),
-    )
+    ZLayer.fromZIO(for {
+      fetcher <- ZIO.succeed(new JwksFetcherLive(trustStorePath, trustStorePassword))
+      cache   <- Cache.make(1, cacheTTL, Lookup(fetcher.fetch))
+    } yield new CachingJwksFetcher(cache))
 }
