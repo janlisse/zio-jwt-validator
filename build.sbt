@@ -9,7 +9,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "zio-jwt-validator",
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-    libraryDependencies ++= Seq(`zio-test`, `zio-test-sbt`, `zio-http`, `zio-json`, `base64Scala`,`zio-prelude`, `jwt-zio-json`, `zio-http-test`),
+    libraryDependencies ++= Seq(`zio-test`, `zio-test-sbt`, `zio-http`, `zio-json`, `zio-cache`, `base64Scala`,`zio-prelude`, `jwt-zio-json`, `zio-http-test`),
   )
   .settings(
     Docker / version := version.value,

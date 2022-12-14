@@ -22,6 +22,7 @@ object JwtValidator {
 }
 
 final case class JwtValidatorLive(
+    jwksURL: URL,
     fetcher: JwksFetcher,
     matchers: List[JwkMatcher],
     claimValidators: List[ClaimValidator])
@@ -29,7 +30,7 @@ final case class JwtValidatorLive(
   def validate(token: String): IO[JwtValidationError, Unit] =
     (for {
       header <- parseHeader(token)
-      jwks   <- fetcher.fetch()
+      jwks   <- fetcher.fetch(jwksURL)
       jwk    <- filterJwk(jwks, header, matchers)
       claim  <- parseClaim(jwk, token)
       _      <- validateClaim(claim)
@@ -90,12 +91,14 @@ final case class JwtValidatorLive(
 
 object JwtValidatorLive {
   def layer(
+      jwksUrl: String,
       matcher: List[JwkMatcher] = Nil,
       claimValidator: List[ClaimValidator] = Nil,
     ) =
     ZLayer(
       for {
+        url     <- ZIO.fromEither(URL.fromString(jwksUrl))
         fetcher <- ZIO.service[JwksFetcher]
-      } yield JwtValidatorLive(fetcher, matcher, claimValidator),
+      } yield JwtValidatorLive(url, fetcher, matcher, claimValidator),
     )
 }
