@@ -15,6 +15,12 @@ Then `zio-jwt-validator` might be for you.
 It is based on zio, [zio-json](https://github.com/zio/zio-json), [zio-http](https://github.com/zio/zio-http) (for the http client) and [jwt-scala](https://jwt-scala.github.io/jwt-scala/jwt-core-jwt.html) for JWT token parsing
 and signature verification.
 
+### Installation
+
+```scala
+libraryDependencies += "io.github.janlisse" %% "zio-jwt-validator" % "0.1.0"
+```
+
 ### Status
 - Only validation of RSA signed tokens is currently supported, which works fine with an Authentication Provider like
 [Auth0](https://auth0.com/)

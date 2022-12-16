@@ -2,15 +2,37 @@ import Dependencies._
 import xerial.sbt.Sonatype._
 import ReleaseTransformations._
 
-ThisBuild / organization  := "io.github.janlisse"
-ThisBuild / version       := "0.1.0"
-ThisBuild / versionScheme := Some("semver-spec")
+ThisBuild / organization           := "io.github.janlisse"
+ThisBuild / version                := "0.1.0"
+ThisBuild / versionScheme          := Some("semver-spec")
+ThisBuild / licenses += ("MIT", url("https://opensource.org/licenses/MIT"))
+ThisBuild / homepage               := Some(url("https://github.com/janlisse/zio-jwt-validator"))
+ThisBuild / scmInfo                := Some(
+  ScmInfo(
+    url("https://github.com/janlisse/zio-jwt-validator"),
+    "scm:git@github.com:janlisse/zio-jwt-validator.git",
+  ),
+)
+ThisBuild / developers             := List(
+  Developer(
+    id = "janlisse",
+    name = "Jan Lisse",
+    email = "jan.lisse@gmail.com",
+    url = url("https://github.com/janlisse/zio-jwt-validator"),
+  ),
+)
+ThisBuild / publishTo              := sonatypePublishToBundle.value
+ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
+ThisBuild / publishMavenStyle      := true
+ThisBuild / sonatypeProjectHosting := Some(
+  GitHubHosting("janlisse", "zio-jwt-validatpr", "jan.lisse@gmail.com"),
+)
 
 lazy val root = (project in file("."))
   .enablePlugins(JavaAppPackaging)
   .settings(BuildHelper.stdSettings)
   .settings(
-    name                   := "zio-jwt-validator",
+    name              := "zio-jwt-validator",
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
     libraryDependencies ++= Seq(
       `zio-test`,
@@ -23,31 +45,21 @@ lazy val root = (project in file("."))
       `jwt-zio-json`,
       `zio-http-test`,
     ),
-    publishTo              := sonatypePublishToBundle.value,
-    sonatypeCredentialHost := "s01.oss.sonatype.org",
-    publishMavenStyle      := true,
-    sonatypeProjectHosting := Some(
-      GitHubHosting("janlisse", "zio-jwt-validatpr", "jan.lisse@gmail.com"),
+    releaseCrossBuild := false,
+    releaseProcess    := Seq[ReleaseStep](
+      checkSnapshotDependencies,
+      inquireVersions,
+      runClean,
+      runTest,
+      setReleaseVersion,
+      commitReleaseVersion,
+      tagRelease,
+      releaseStepCommandAndRemaining("publishSigned"),
+      setNextVersion,
+      commitNextVersion,
+      releaseStepCommand("sonatypeReleaseBundle"),
+      pushChanges,
     ),
-    releaseCrossBuild      := false,
-    releaseProcess         := Seq[ReleaseStep](
-      checkSnapshotDependencies, // check that there are no SNAPSHOT dependencies
-      inquireVersions,           // ask user to enter the current and next verion
-      runClean,                  // clean
-      runTest,                   // run tests
-      setReleaseVersion,         // set release version in version.sbt
-      commitReleaseVersion,      // commit the release version
-      tagRelease,                // create git tag
-      releaseStepCommandAndRemaining("+publishSigned"), // run +publishSigned command to sonatype stage release
-      setNextVersion,                        // set next version in version.sbt
-      commitNextVersion,                     // commint next version
-      releaseStepCommand("sonatypeRelease"), // run sonatypeRelease and publish to maven central
-      pushChanges,                           // push changes to git
-    ),
-  )
-  .settings(
-    Docker / version          := version.value,
-    Compile / run / mainClass := Option("zio.jwt.Main"),
   )
 
 addCommandAlias("fmt", "scalafmt; Test / scalafmt;")
