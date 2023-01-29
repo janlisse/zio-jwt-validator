@@ -10,8 +10,8 @@ object BuildHelper {
     case _                             => Seq.empty
   }
   def stdSettings                          = Seq(
-    ThisBuild / fork              := true,
-    ThisBuild / scalaVersion      := ScalaVersion,
-    ThisBuild / scalacOptions     := commonSettings(scalaVersion.value)
+    ThisBuild / fork          := true,
+    ThisBuild / scalaVersion  := ScalaVersion,
+    ThisBuild / scalacOptions := commonSettings(scalaVersion.value),
   )
 }
