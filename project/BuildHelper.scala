@@ -2,7 +2,7 @@ import sbt._
 import sbt.Keys._
 
 object BuildHelper {
-  val ScalaVersion = "3.2.1"
+  val ScalaVersion = "3.2.2"
 
   def commonSettings(scalaVersion: String) = CrossVersion.partialVersion(scalaVersion) match {
     case Some((3, _))                  => Seq.empty
