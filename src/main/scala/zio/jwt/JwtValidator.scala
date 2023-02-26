@@ -14,11 +14,15 @@ import java.util.Base64
 import javax.sql.DataSource
 
 trait JwtValidator {
-  def validate(token: String): IO[JwtValidationError, Unit]
+  def validate(
+      token: String,
+    ): IO[JwtValidationError, Unit]
 }
 
 object JwtValidator {
-  def validate(token: String) = ZIO.serviceWithZIO[JwtValidator](_.validate(token))
+  def validate(
+      token: String,
+    ) = ZIO.serviceWithZIO[JwtValidator](_.validate(token))
 }
 
 final case class JwtValidatorLive(
@@ -27,7 +31,9 @@ final case class JwtValidatorLive(
     matchers: List[JwkMatcher],
     claimValidators: List[ClaimValidator])
     extends JwtValidator {
-  def validate(token: String): IO[JwtValidationError, Unit] =
+  def validate(
+      token: String,
+    ): IO[JwtValidationError, Unit] =
     (for {
       header <- parseHeader(token)
       jwks   <- fetcher.fetch(jwksURL)
@@ -36,7 +42,9 @@ final case class JwtValidatorLive(
       _      <- validateClaim(claim)
     } yield ()).tapErrorCause(cause => ZIO.logErrorCause(cause))
 
-  private def toValidationError(throwable: Throwable): JwtValidationError =
+  private def toValidationError(
+      throwable: Throwable,
+    ): JwtValidationError =
     throwable match {
       case _: JwtExpirationException => TokenExpired
       case _: JwtNotBeforeException  => TokenNotYetValid
@@ -57,13 +65,18 @@ final case class JwtValidatorLive(
       )
       .mapError(_ => NoMatchingJwkFound)
 
-  private def parseClaim(jwk: Jwk, token: String): IO[JwtValidationError, JwtClaim] =
+  private def parseClaim(
+      jwk: Jwk,
+      token: String,
+    ): IO[JwtValidationError, JwtClaim] =
     (jwk match {
       case r: RsaJwk => ZIO.fromTry(JwtZIOJson.decode(token, r.getPublicKey))
       case x         => ZIO.fail(new IllegalAccessException(s"Unsupported key: $x"))
     }).mapError(toValidationError)
 
-  private def parseHeader(token: String) =
+  private def parseHeader(
+      token: String,
+    ) =
     if (!token.contains("."))
       ZIO.fail(JwtParsingError("Invalid token format"))
     else
@@ -76,7 +89,9 @@ final case class JwtValidatorLive(
           .mapError(e => JwtParsingError(e.getMessage))
       } yield header
 
-  private def validateClaim(claim: JwtClaim): IO[ClaimValidationErrors, Unit] =
+  private def validateClaim(
+      claim: JwtClaim,
+    ): IO[ClaimValidationErrors, Unit] =
     ZIO
       .fromEither(
         Validation

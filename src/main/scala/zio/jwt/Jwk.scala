@@ -15,7 +15,9 @@ abstract class Jwk {
 }
 
 object Jwk {
-  def parse(json: Json): Either[JwksParsingError, Jwk] =
+  def parse(
+      json: Json,
+    ): Either[JwksParsingError, Jwk] =
     json.get(field("kty").isString).map(_.value) match {
       case Right("RSA") =>
         (for {
@@ -31,7 +33,9 @@ object Jwk {
       case x            => Left(JwksParsingError(s"Unsupported key type: $x"))
     }
 
-  private def decodeBigInt(value: String): Either[String, BigInt] =
+  private def decodeBigInt(
+      value: String,
+    ): Either[String, BigInt] =
     Try {
       BigInt(1, Base64.getUrlDecoder.decode(value))
     }.toEither.left.map(_.toString)
