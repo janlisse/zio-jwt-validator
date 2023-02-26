@@ -54,7 +54,11 @@ object JwtValidatorSpec extends ZIOSpecDefault {
     },
   )
 
-  private def genKeyPair(): (PrivateKey, RSAPublicKey) = {
+  private def genKeyPair(
+    ): (
+      PrivateKey,
+      RSAPublicKey,
+    ) = {
     val kpg     = KeyPairGenerator.getInstance("RSA")
     kpg.initialize(2048)
     val keyPair = kpg.generateKeyPair()
@@ -62,7 +66,11 @@ object JwtValidatorSpec extends ZIOSpecDefault {
   }
 }
 
-class MockFetcher(jwks: Jwks) extends JwksFetcher {
-  def fetch(jwksUrl: URL): IO[JwtValidationError, Jwks] =
+class MockFetcher(
+    jwks: Jwks)
+    extends JwksFetcher {
+  def fetch(
+      jwksUrl: URL,
+    ): IO[JwtValidationError, Jwks] =
     ZIO.succeed(jwks)
 }

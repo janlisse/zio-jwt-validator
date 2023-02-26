@@ -13,18 +13,24 @@ import java.time.Duration
 import javax.net.ssl.TrustManagerFactory
 
 trait JwksFetcher {
-  def fetch(jwksUrl: URL): IO[JwtValidationError, Jwks]
+  def fetch(
+      jwksUrl: URL,
+    ): IO[JwtValidationError, Jwks]
 }
 
 object JwksFetcher {
-  def fetch(jwksUrl: URL) = ZIO.serviceWithZIO[JwksFetcher](_.fetch(jwksUrl))
+  def fetch(
+      jwksUrl: URL,
+    ) = ZIO.serviceWithZIO[JwksFetcher](_.fetch(jwksUrl))
 }
 
 final class JwksFetcherLive(
     trustStoreFile: String,
     trustStorePasswd: String)
     extends JwksFetcher {
-  def fetch(jwksUrl: URL): IO[JwtValidationError, Jwks] = {
+  def fetch(
+      jwksUrl: URL,
+    ): IO[JwtValidationError, Jwks] = {
     val env = ChannelFactory.auto ++ EventLoopGroup.auto()
 
     val program = for {
@@ -38,7 +44,9 @@ final class JwksFetcherLive(
     program.provide(env)
   }
 
-  private def checkSSL(url: URL): IO[JwtValidationError, Unit] =
+  private def checkSSL(
+      url: URL,
+    ): IO[JwtValidationError, Unit] =
     if (url.scheme.exists(_.isSecure))
       ZIO.succeed(())
     else
@@ -61,12 +69,18 @@ final class JwksFetcherLive(
     )
   }
 
-  private def parseJwks(str: String): IO[JwtValidationError, Jwks] =
+  private def parseJwks(
+      str: String,
+    ): IO[JwtValidationError, Jwks] =
     ZIO.fromEither(Jwks.parse(str))
 }
 
-final class CachingJwksFetcher(cache: Cache[URL, JwtValidationError, Jwks]) extends JwksFetcher {
-  def fetch(jwksUrl: URL): IO[JwtValidationError, Jwks] = cache.get(jwksUrl)
+final class CachingJwksFetcher(
+    cache: Cache[URL, JwtValidationError, Jwks])
+    extends JwksFetcher {
+  def fetch(
+      jwksUrl: URL,
+    ): IO[JwtValidationError, Jwks] = cache.get(jwksUrl)
 }
 
 object JwksFetcherLive {
