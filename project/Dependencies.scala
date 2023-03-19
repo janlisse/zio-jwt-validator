@@ -1,7 +1,7 @@
 import sbt._
 
 object Dependencies {
-  val ZioVersion   = "2.0.9"
+  val ZioVersion   = "2.0.10"
   val ZHTTPVersion = "2.0.0-RC11"
 
   val `zio-http`      = "io.d11" %% "zhttp" % ZHTTPVersion
@@ -12,6 +12,6 @@ object Dependencies {
   val `zio-json`     = "dev.zio"              %% "zio-json"     % "0.4.2"
   val `jwt-zio-json` = "com.github.jwt-scala" %% "jwt-zio-json" % "9.2.0"
   val `zio-cache`    = "dev.zio"              %% "zio-cache"    % "0.2.2"
-  val `zio-prelude`  = "dev.zio"              %% "zio-prelude"  % "1.0.0-RC16"
+  val `zio-prelude`  = "dev.zio"              %% "zio-prelude"  % "1.0.0-RC18"
   val `base64Scala`  = "com.github.j5ik2o"    %% "base64scala"  % "1.0.55"
 }
