@@ -2,7 +2,7 @@ import sbt._
 import sbt.Keys._
 
 object BuildHelper {
-  val ScalaVersion = "3.2.2"
+  val ScalaVersion = "3.3.0"
 
   def commonSettings(
       scalaVersion: String,
