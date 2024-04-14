@@ -1,7 +1,7 @@
 import sbt._
 
 object Dependencies {
-  val ZioVersion   = "2.0.10"
+  val ZioVersion   = "2.0.22"
   val ZHTTPVersion = "2.0.0-RC11"
 
   val `zio-http`      = "io.d11" %% "zhttp" % ZHTTPVersion
