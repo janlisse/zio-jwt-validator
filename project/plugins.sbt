@@ -1,6 +1,6 @@
 addSbtPlugin("io.spray"         % "sbt-revolver"         % "0.9.1")
 addSbtPlugin("org.scalameta"    % "sbt-scalafmt"         % "2.5.0")
-addSbtPlugin("com.github.sbt"   % "sbt-native-packager"  % "1.9.16")
+addSbtPlugin("com.github.sbt"   % "sbt-native-packager"  % "1.11.1")
 addSbtPlugin("net.vonbuchholtz" % "sbt-dependency-check" % "4.3.0")
 addSbtPlugin("org.xerial.sbt"   % "sbt-sonatype"         % "3.9.18")
 addSbtPlugin("com.github.sbt"   % "sbt-pgp"              % "2.2.1")
