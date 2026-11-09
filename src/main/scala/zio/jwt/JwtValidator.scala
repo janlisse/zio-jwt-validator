@@ -85,7 +85,7 @@ final case class JwtValidatorLive(
           .fromOption(token.split("\\.").headOption)
           .mapError(_ => JwtParsingError("Invalid token format"))
         header    <- ZIO
-          .attempt(JwtZIOJson.parseHeader(new String(Base64.getDecoder.decode(headerStr))))
+          .attempt(JwtZIOJson.parseHeader(new String(Base64.getUrlDecoder.decode(headerStr))))
           .mapError(e => JwtParsingError(e.getMessage))
       } yield header
 

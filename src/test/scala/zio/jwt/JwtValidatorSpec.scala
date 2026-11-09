@@ -24,6 +24,25 @@ object JwtValidatorSpec extends ZIOSpecDefault {
         r <- validator.validate(token).either
       } yield assertTrue(r == Right(()))
     },
+    test("validate token whose header contains base64url-specific characters") {
+      val jwksUrl           = URL.fromString("https://myhost/.well-known/jwks.json").toOption.get
+      val (privKey, pubKey) = genKeyPair()
+      val jwks              =
+        Jwks(keys = Vector(RsaJwk(pubKey.getPublicExponent, pubKey.getModulus, None, None)))
+      val fetcher           = new MockFetcher(jwks)
+      val validator         = JwtValidatorLive(jwksUrl, fetcher, Nil, Nil)
+      val token             = Jwt.encode(
+        """{"alg":"RS256","typ":"JWT","kid":"~~~???"}""",
+        """{"user":1}""",
+        privKey,
+        JwtAlgorithm.RS256,
+      )
+      val header            = token.split("\\.").head
+
+      for {
+        r <- validator.validate(token).either
+      } yield assertTrue(header.contains("-"), header.contains("_"), r == Right(()))
+    },
     test("return JwtParsingError for token with invalid header") {
       val jwksUrl     = URL.fromString("https://myhost/.well-known/jwks.json").toOption.get
       val (_, pubKey) = genKeyPair()
