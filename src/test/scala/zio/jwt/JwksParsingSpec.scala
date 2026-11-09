@@ -3,7 +3,6 @@ package zio.jwt
 import scala.io.Source
 import zio.test.*
 import zio.test.Assertion.*
-import zhttp.http.*
 
 import zio._
 import zio.test.{test, _}

@@ -43,8 +43,10 @@ lazy val root = (project in file("."))
       `base64Scala`,
       `zio-prelude`,
       `jwt-zio-json`,
-      `zio-http-test`,
     ),
+    // zio-http needs zio-json 1.x, while jwt-zio-json is still built against 0.7.x.
+    // All zio-json members jwt-zio-json 11.0.4 references exist unchanged in 1.1.2.
+    libraryDependencySchemes += "dev.zio" %% "zio-json" % VersionScheme.Always,
     releaseCrossBuild := false,
     releaseProcess    := Seq[ReleaseStep](
       checkSnapshotDependencies,
