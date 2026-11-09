@@ -1,16 +1,11 @@
 package zio.jwt
 
-import io.netty.handler.ssl.SslContextBuilder
-import zhttp.http.URL
-import zhttp.service.client.ClientSSLHandler.ClientSSLOptions
-import zhttp.service.{ChannelFactory, Client, EventLoopGroup}
+import zio.http.{Client, ClientSSLConfig, DnsResolver, Request, URL, ZClient}
+import zio.http.netty.NettyConfig
 import zio.{IO, ZIO, ZLayer}
 import zio.cache.{Cache, Lookup}
 
-import java.io.{FileInputStream, InputStream}
-import java.security.KeyStore
 import java.time.Duration
-import javax.net.ssl.TrustManagerFactory
 
 trait JwksFetcher {
   def fetch(
@@ -25,49 +20,25 @@ object JwksFetcher {
 }
 
 final class JwksFetcherLive(
-    trustStoreFile: String,
-    trustStorePasswd: String)
+    client: Client)
     extends JwksFetcher {
   def fetch(
       jwksUrl: URL,
-    ): IO[JwtValidationError, Jwks] = {
-    val env = ChannelFactory.auto ++ EventLoopGroup.auto()
-
-    val program = for {
+    ): IO[JwtValidationError, Jwks] =
+    for {
       _    <- checkSSL(jwksUrl)
-      res  <- Client
-        .request(jwksUrl.encode, ssl = sslOptionsWithTrustManager(trustStoreFile, trustStorePasswd))
-        .mapError(e => JwksLoadError(e.getMessage))
+      res  <- client.batched(Request.get(jwksUrl)).mapError(e => JwksLoadError(e.getMessage))
       data <- res.body.asString.mapError(e => JwksParsingError(e.getMessage))
       jwks <- parseJwks(data)
     } yield jwks
-    program.provide(env)
-  }
 
   private def checkSSL(
       url: URL,
     ): IO[JwtValidationError, Unit] =
-    if (url.scheme.exists(_.isSecure))
+    if (url.scheme.flatMap(_.isSecure).contains(true))
       ZIO.succeed(())
     else
       ZIO.fail(InsecureConnection)
-
-  private def sslOptionsWithTrustManager(
-      trustStoreFile: String,
-      trustStorePasswd: String,
-    ): ClientSSLOptions = {
-    val trustStore          = KeyStore.getInstance("JKS")
-    val trustStorePath      = new FileInputStream(trustStoreFile)
-    val trustManagerFactory =
-      TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
-
-    trustStore.load(trustStorePath, trustStorePasswd.toCharArray)
-    trustManagerFactory.init(trustStore)
-
-    ClientSSLOptions.CustomSSL(
-      SslContextBuilder.forClient().trustManager(trustManagerFactory).build(),
-    )
-  }
 
   private def parseJwks(
       str: String,
@@ -87,15 +58,31 @@ object JwksFetcherLive {
   def uncached(
       trustStorePath: String,
       trustStorePassword: String,
-    ) = ZLayer.succeed(new JwksFetcherLive(trustStorePath, trustStorePassword))
+    ): ZLayer[Any, Throwable, JwksFetcher] =
+    client(trustStorePath, trustStorePassword) >>> ZLayer.fromFunction(new JwksFetcherLive(_))
 
   def cached(
       trustStorePath: String,
       trustStorePassword: String,
       cacheTTL: Duration = Duration.ofMinutes(10),
-    ) =
-    ZLayer.fromZIO(for {
-      fetcher <- ZIO.succeed(new JwksFetcherLive(trustStorePath, trustStorePassword))
-      cache   <- Cache.make(1, cacheTTL, Lookup(fetcher.fetch))
+    ): ZLayer[Any, Throwable, JwksFetcher] =
+    client(trustStorePath, trustStorePassword) >>> ZLayer.fromZIO(for {
+      client <- ZIO.service[Client]
+      fetcher = new JwksFetcherLive(client)
+      cache <- Cache.make(1, cacheTTL, Lookup(fetcher.fetch))
     } yield new CachingJwksFetcher(cache))
+
+  private def client(
+      trustStorePath: String,
+      trustStorePassword: String,
+    ): ZLayer[Any, Throwable, Client] = {
+    val config =
+      ZClient
+        .Config
+        .default
+        .ssl(ClientSSLConfig.FromTrustStoreFile(trustStorePath, trustStorePassword))
+    (ZLayer.succeed(config) ++ ZLayer.succeed(
+      NettyConfig.default,
+    ) ++ DnsResolver.default) >>> Client.live
+  }
 }

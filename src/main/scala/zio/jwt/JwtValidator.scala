@@ -3,8 +3,7 @@ package zio.jwt
 import pdi.jwt.JwtAlgorithm.RS256
 import pdi.jwt.{JwtClaim, JwtHeader, JwtZIOJson}
 import pdi.jwt.exceptions.{JwtExpirationException, JwtNotBeforeException}
-import zhttp.http.URL
-import zhttp.service.{ChannelFactory, Client, EventLoopGroup}
+import zio.http.URL
 import zio.json.*
 import zio.prelude.{Associative, Validation, ZValidation}
 import zio.{Chunk, IO, NonEmptyChunk, Task, ZIO, ZLayer}
@@ -112,7 +111,7 @@ object JwtValidatorLive {
     ) =
     ZLayer(
       for {
-        url     <- ZIO.fromEither(URL.fromString(jwksUrl))
+        url     <- ZIO.fromEither(URL.decode(jwksUrl))
         fetcher <- ZIO.service[JwksFetcher]
       } yield JwtValidatorLive(url, fetcher, matcher, claimValidator),
     )

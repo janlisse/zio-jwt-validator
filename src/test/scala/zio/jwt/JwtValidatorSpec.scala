@@ -4,7 +4,7 @@ import pdi.jwt.{Jwt, JwtAlgorithm}
 import zio.jwt.ClaimValidator.{InvalidAudience, InvalidIssuer}
 import zio.{IO, NonEmptyChunk, ZIO}
 import zio.test.{assertTrue, assertZIO, ZIOSpecDefault}
-import zhttp.http.URL
+import zio.http.URL
 
 import java.security.interfaces.RSAPublicKey
 import java.security.{KeyPair, KeyPairGenerator, PrivateKey, PublicKey}
@@ -12,7 +12,7 @@ import java.security.{KeyPair, KeyPairGenerator, PrivateKey, PublicKey}
 object JwtValidatorSpec extends ZIOSpecDefault {
   def spec = suite("JwtValidatorSpec")(
     test("validate valid RS256 token successfully") {
-      val jwksUrl           = URL.fromString("https://myhost/.well-known/jwks.json").toOption.get
+      val jwksUrl           = URL.decode("https://myhost/.well-known/jwks.json").toOption.get
       val (privKey, pubKey) = genKeyPair()
       val jwks              =
         Jwks(keys = Vector(RsaJwk(pubKey.getPublicExponent, pubKey.getModulus, None, None)))
@@ -25,7 +25,7 @@ object JwtValidatorSpec extends ZIOSpecDefault {
       } yield assertTrue(r == Right(()))
     },
     test("validate token whose header contains base64url-specific characters") {
-      val jwksUrl           = URL.fromString("https://myhost/.well-known/jwks.json").toOption.get
+      val jwksUrl           = URL.decode("https://myhost/.well-known/jwks.json").toOption.get
       val (privKey, pubKey) = genKeyPair()
       val jwks              =
         Jwks(keys = Vector(RsaJwk(pubKey.getPublicExponent, pubKey.getModulus, None, None)))
@@ -44,7 +44,7 @@ object JwtValidatorSpec extends ZIOSpecDefault {
       } yield assertTrue(header.contains("-"), header.contains("_"), r == Right(()))
     },
     test("return JwtParsingError for token with invalid header") {
-      val jwksUrl     = URL.fromString("https://myhost/.well-known/jwks.json").toOption.get
+      val jwksUrl     = URL.decode("https://myhost/.well-known/jwks.json").toOption.get
       val (_, pubKey) = genKeyPair()
       val jwks        =
         Jwks(keys = Vector(RsaJwk(pubKey.getPublicExponent, pubKey.getModulus, None, None)))
@@ -55,7 +55,7 @@ object JwtValidatorSpec extends ZIOSpecDefault {
       } yield assertTrue(r == Left(JwtParsingError("Invalid token format")))
     },
     test("compose claim validation errors") {
-      val jwksUrl           = URL.fromString("https://myhost/.well-known/jwks.json").toOption.get
+      val jwksUrl           = URL.decode("https://myhost/.well-known/jwks.json").toOption.get
       val (privKey, pubKey) = genKeyPair()
       val jwks              =
         Jwks(keys = Vector(RsaJwk(pubKey.getPublicExponent, pubKey.getModulus, None, None)))
