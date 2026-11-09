@@ -27,7 +27,7 @@ object Jwk {
           decodedModulus  <- decodeBigInt(modulus)
           algorithm = json.get(field("alg").isString).toOption.map(_.value)
           kid       = json.get(field("kid").isString).toOption.map(_.value)
-        } yield RsaJwk(decodedExponent, decodedModulus, algorithm, kid))
+        } yield RsaJwk(decodedExponent, decodedModulus, kid, algorithm))
           .left
           .map(JwksParsingError.apply)
       case x            => Left(JwksParsingError(s"Unsupported key type: $x"))
