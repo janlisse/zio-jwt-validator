@@ -4,7 +4,11 @@ object Dependencies {
   val ZioVersion     = "2.1.27"
   val ZioHttpVersion = "3.11.6"
 
-  val `zio-http` = "dev.zio" %% "zio-http" % ZioHttpVersion
+  // netty-pkitesting (and Bouncy Castle) is only used by zio-http's server for
+  // generating self-signed certificates, which this client library never does.
+  val `zio-http`         = ("dev.zio" %% "zio-http" % ZioHttpVersion).exclude("io.netty", "netty-pkitesting")
+  // Keep in sync with the Netty version zio-http depends on
+  val `netty-pkitesting` = "io.netty"  % "netty-pkitesting" % "4.2.18.Final" % Test
 
   val `zio-test`     = "dev.zio"              %% "zio-test"     % ZioVersion % Test
   val `zio-test-sbt` = "dev.zio"              %% "zio-test-sbt" % ZioVersion % Test

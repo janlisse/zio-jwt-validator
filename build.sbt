@@ -43,6 +43,7 @@ lazy val root = (project in file("."))
       `base64Scala`,
       `zio-prelude`,
       `jwt-zio-json`,
+      `netty-pkitesting`,
     ),
     // zio-http needs zio-json 1.x, while jwt-zio-json is still built against 0.7.x.
     // All zio-json members jwt-zio-json 11.0.4 references exist unchanged in 1.1.2.
