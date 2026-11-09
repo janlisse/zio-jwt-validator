@@ -23,18 +23,3 @@ jobs:
           check_name: Unit test report
           files: target/test-reports/*.xml
           comment_mode: off
-
-  dependency-check:
-    name: Dependency check (non-blocking)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Scala
-        uses: olafurpg/setup-scala@v13
-        with:
-          java-version: amazon-corretto@1.17
-      - name: Cache dependencies
-        uses: coursier/cache-action@v6
-      - name: Run dependency check
-        continue-on-error: true
-        run: sbt dependencyCheck
