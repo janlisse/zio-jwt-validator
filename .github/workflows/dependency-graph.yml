@@ -1,0 +1,18 @@
+name: Update dependency graph
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  dependency-graph:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@56b893ae09c48f21c16a9793a107c2723ccc123a # v13
+        with:
+          java-version: amazon-corretto@1.17
+      - name: Submit dependencies
+        uses: scalacenter/sbt-dependency-submission@d84eef4c09e633bcf5f113bcad7fd5e9af1baee9 # v3.2.3
