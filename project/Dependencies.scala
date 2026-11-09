@@ -10,6 +10,11 @@ object Dependencies {
   // Keep in sync with the Netty version zio-http depends on
   val `netty-pkitesting` = "io.netty"  % "netty-pkitesting" % "4.2.18.Final" % Test
 
+  // netty-pkitesting 4.2.18 brings Bouncy Castle 1.84, which has known vulnerabilities
+  val BouncyCastleVersion   = "1.86"
+  val `bouncycastle-pinned` = Seq("bcprov-jdk18on", "bcpkix-jdk18on", "bcutil-jdk18on")
+    .map("org.bouncycastle" % _ % BouncyCastleVersion)
+
   val `zio-test`     = "dev.zio"              %% "zio-test"     % ZioVersion % Test
   val `zio-test-sbt` = "dev.zio"              %% "zio-test-sbt" % ZioVersion % Test
   val `zio-json`     = "dev.zio"              %% "zio-json"     % "1.1.2"
